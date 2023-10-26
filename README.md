@@ -1,8 +1,10 @@
 # MoviesAPI
-This project was about provide Application Program Interface about Movies Information
+This project was about provide Application Program Interface Movies Information equipped with unit testing.
 
 ## Dev Environment Setup
 * **Back end** (.Net Core 2.1)
+* **ORM** (Dapper 2.1)
+* **Unit Testing** (xUnit Test Project 2.4)
 * **Database** (Mysql)
 
 ## API
