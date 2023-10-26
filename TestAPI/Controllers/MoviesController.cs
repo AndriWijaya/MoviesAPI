@@ -15,6 +15,11 @@ namespace TestAPI.Controllers
     public class MoviesController : ControllerBase
     {
         private const string _connectionString = "server=127.0.0.1;uid=root;pwd=;database=tesapi;";
+        private AllMessage _msg;
+
+        public MoviesController() {
+            _msg = new AllMessage();
+        }
 
         // GET api/movies
         [HttpGet]
@@ -100,12 +105,12 @@ namespace TestAPI.Controllers
                         conn.Execute(sql, value);
 
                         messageInfo.Status = true;
-                        messageInfo.Message.Add("Data berhasil disimpan");
+                        messageInfo.Message.Add(_msg.SUCCESS_INSERT);
                     }
                     catch (Exception ex)
                     {
-                        messageInfo.Status = true;
-                        messageInfo.Message.Add(ex.Message);
+                        messageInfo.Status = false;
+                        messageInfo.Message.Add(_msg.FAIL_INSERT);
                     }
                     finally
                     {
@@ -118,7 +123,7 @@ namespace TestAPI.Controllers
 
         // PATCH api/movies/5
         [HttpPatch("{id}")]
-        public void Patch(int id, [FromBody] Film value)
+        public MessageInfo Patch(int id, [FromBody] Film value)
         {
             value.Id = id;
 
@@ -142,18 +147,20 @@ namespace TestAPI.Controllers
 
             if (!messageInfo.Message.Any())
             {
-                int ret = 0;
                 using (var conn = new MySqlConnection(_connectionString))
                 {
                     try
                     {
                         conn.Open();
                         string sql = @"update film set title = @title, description = @description, rating = @rating, image = @image, updated_at = now() where id = @id";
-                        ret = conn.Execute(sql, value);
+                        int upd = conn.Execute(sql, value);
+
+                        messageInfo.Status = upd > 0 ? true : false;
+                        messageInfo.Message.Add(messageInfo.Status ? _msg.SUCCESS_UPDATE : _msg.DATA_NOTFOUND);
                     }
                     catch (Exception ex)
                     {
-                        throw ex;
+                        messageInfo.Message.Add(_msg.FAIL_UPDATE);
                     }
                     finally
                     {
@@ -161,30 +168,34 @@ namespace TestAPI.Controllers
                     }
                 }
             }
+            return messageInfo;
         }
 
         // DELETE api/movies/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public MessageInfo Delete(int id)
         {
-            int ret = 0;
+            MessageInfo ret = new MessageInfo();
             using (var conn = new MySqlConnection(_connectionString))
             {
                 try
                 {
                     conn.Open();
                     string sql = @"delete from film where id = @id";
-                    ret = conn.Execute(sql, new { id = id});
+                    int del = conn.Execute(sql, new { id = id});
+                    ret.Status = del > 0 ? true : false;
+                    ret.Message.Add(ret.Status ? _msg.SUCCESS_DELETE : _msg.DATA_NOTFOUND);
                 }
                 catch (Exception ex)
                 {
-                    throw ex;
+                    ret.Message.Add(_msg.FAIL_DELETE);
                 }
                 finally
                 {
                     conn.Close();
                 }
             }
+            return ret;
         }
     }
 }
